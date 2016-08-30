@@ -1,0 +1,208 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="minicercchelperversion" content="0.8.1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title></title>
+    <style>
+        body {
+            background-color: ButtonFace;
+            font-family: Microsoft Sans Serif;
+            font-size: 8.25pt;
+            margin: 0px;
+        }
+
+        ul {
+            text-align: left;
+            margin-left: 0px;
+            padding-left: 0px;
+            list-style-position: inside;
+        }
+
+        a:visited {
+            color: blue;
+        }
+
+        fieldset {
+            font-family: sans-serif;
+            border: 3px solid #1F497D;
+            border-radius: 2px;
+            padding: 4px;
+        }
+
+            fieldset legend {
+                background: #1F497D;
+                color: #fff;
+                padding: 2px 4px;
+                font-size: 12px;
+                border-radius: 2px;
+                box-shadow: 0 0 0 2px #ddd;
+                margin-left: 6px;
+            }
+
+        div#version {
+            display: inline-block;
+            color: #fff;
+            padding: 2px 4px;
+            font-size: 12px;
+            border-radius: 2px;
+            margin-top: 6px;
+            margin-left: 6px;
+        }
+
+            div#version.uptodate {
+                display: none;
+            }
+
+            div#version.outofdate {
+                background: #f44336;
+            }
+    </style>
+    <style>
+        /* from: http://www.w3schools.com/howto/howto_js_alert.asp */
+        /* The alert message box */
+        .alert {
+            padding: 20px;
+            background-color: #f44336; /* Red */
+            color: white;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        /* The close button */
+        .closebtn {
+            margin-left: 15px;
+            color: white;
+            font-weight: bold;
+            float: right;
+            font-size: 22px;
+            line-height: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+            /* When moving the mouse over the close button */
+            .closebtn:hover {
+                color: black;
+            }
+    </style>
+</head>
+<body>
+    <div class="alert">
+        <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+        This is <strong>local</strong> page, you may want to switch to server page. Use the drop down menu above.
+    </div>
+    <div id="version" class="outofdate">
+        Your CC Helper is out of date.
+    </div>
+    <fieldset>
+        <legend>Tools</legend>
+        The repository you want to operate on: <input type="text" id="vobname" value="vob" onchange="updateaction()" />
+        <ul>
+            <li><a href="javascript:void(0)" data-actiontemplate="switch($vob$, configspec\configspec.txt, branch)">Switch</a> to developer branch</li>
+            <li><a href="javascript:void(0)" data-action="sync">Sync</a> code from git to CC</li>
+            <li><a href="javascript:void(0)" data-actiontemplate="switch($vob$, configspec\configspec.txt, developermain)">Switch</a> to main</li>
+            <li><a href="javascript:void(0)" data-actiontemplate="merge($vob$)">Merge</a> from branch</li>
+            <li><a href="javascript:void(0)" data-actiontemplate="commit($vob$, configspec\configspec.txt, label_123\.[xX\d]+)">Commit</a></li>
+            <li><button data-action="inspect">Inspect current configspec</button></li>
+        </ul>
+    </fieldset>
+
+    <script>
+        function isPositiveInteger(x) {
+            // http://stackoverflow.com/a/1019526/11236
+            return /^\d+$/.test(x);
+        }
+
+        /**
+         * Compare two software version numbers (e.g. 1.7.1)
+         * Returns:
+         *
+         *  0 if they're identical
+         *  negative if v1 < v2
+         *  positive if v1 > v2
+         *  Nan if they in the wrong format
+         *
+         *  E.g.:
+         *
+         *  assert(version_number_compare("1.7.1", "1.6.10") > 0);
+         *  assert(version_number_compare("1.7.1", "1.7.10") < 0);
+         *
+         *  "Unit tests": http://jsfiddle.net/ripper234/Xv9WL/28/
+         *
+         *  Taken from http://stackoverflow.com/a/6832721/11236
+         */
+        function compareVersionNumbers(v1, v2) {
+            var v1parts = v1.split('.');
+            var v2parts = v2.split('.');
+
+            // First, validate both numbers are true version numbers
+            function validateParts(parts) {
+                for (var i = 0; i < parts.length; ++i) {
+                    if (!isPositiveInteger(parts[i])) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            if (!validateParts(v1parts) || !validateParts(v2parts)) {
+                return NaN;
+            }
+
+            for (var i = 0; i < v1parts.length; ++i) {
+                if (v2parts.length === i) {
+                    return 1;
+                }
+
+                if (v1parts[i] === v2parts[i]) {
+                    continue;
+                }
+                if (v1parts[i] > v2parts[i]) {
+                    return 1;
+                }
+                return -1;
+            }
+
+            if (v1parts.length != v2parts.length) {
+                return -1;
+            }
+
+            return 0;
+        }
+    </script>
+    <script>
+        function updateaction() {
+            var links = document.getElementsByTagName("a");
+            var vn = document.getElementById('vobname').value;
+            // Store
+            if (typeof (localStorage) !== "undefined") {
+                localStorage.setItem("vobname", vn);
+            }
+
+            for (var i = 0; i < links.length; i++) {
+                var link = links[i];
+                var template = link.getAttribute('data-actiontemplate');
+                if (template != null) {
+                    var content = template.replace('$vob$', vn)
+                    link.setAttribute('data-action', content);
+                }
+            }
+        }
+        if (typeof (localStorage) !== "undefined") {
+            document.getElementById("vobname").value = localStorage.getItem("vobname");
+        }
+        updateaction();
+        function checkversion(version) {
+            var chk = compareVersionNumbers('0.8.1', version);
+            if (chk <= 0) {
+                document.getElementById("version").className = "uptodate";
+            } else if (chk > 0) {
+                document.getElementById("version").className = "outofdate";
+            }
+        }
+    </script>
+
+</body>
+</html>

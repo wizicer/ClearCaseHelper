@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="SynchronizerSessions" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="CCHelperProfile">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Sessions">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Session" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:all>
+                    <xs:element name="SourceFilter" type="xs:string" minOccurs="1" maxOccurs="1" />
+                    <xs:element name="DestFilter" type="xs:string" minOccurs="1" maxOccurs="1" />
+                  </xs:all>
+                  <xs:attribute name="Name" type="xs:string" use="required" />
+                  <xs:attribute name="SourceURL" type="xs:string" use="required" />
+                  <xs:attribute name="SourceBranch" type="xs:string" use="required" />
+                  <xs:attribute name="DestPath" type="xs:string" use="required" />
+                  <xs:attribute name="SourceBasePath" type="xs:string" />
+                  <xs:attribute name="FilterDestSameAsSource" type="xs:boolean" />
+                  <xs:attribute name="SourceUsername" type="xs:string" />
+                  <xs:attribute name="SourcePassword" type="xs:string" />
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="Version" type="xs:integer" use="required" />
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

@@ -1,0 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ServerList Version="1">
+  <Server Name="Initial" URL="http://example.abc/guidepage.html"/>
+</ServerList>
