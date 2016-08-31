@@ -182,7 +182,7 @@
 
         private string GetAuthenticateURL(string url, string username, string password)
         {
-            var r = new Regex("(?<first>https?://).*@(?<second>.*)");
+            var r = new Regex("(?<first>https?://)(.*@)?(?<second>.*)");
             var m = r.Match(url);
             if (!m.Success) return null;
 
