@@ -108,10 +108,22 @@
                     }
                 }
 
-                result.Add(new ElementCompareResult(srcfile, originsrcfile, origindestfile, r, eletype));
+
+                if (destfile == null)
+                {
+                    if (r == CompareResult.Create)
+                    {
+                        // fix file path casing as ClearCase is case sensitive
+                        origindestfile = FixFilePathCasing(origindestfile);
+                        destfile = origindestfile.Replace(destDir, "");
+                    }
+                }
+
+                result.Add(new ElementCompareResult(destfile, originsrcfile, origindestfile, r, eletype));
             }
 
             progress?.Report(new WorkProgress($"finding deleted files..."));
+            var deletedResult = new List<ElementCompareResult>();
             foreach (var destfile in destFiles)
             {
                 var origindestfile = Path.Combine(destDir, destfile);
@@ -119,13 +131,39 @@
                 var originsrcfile = srcfile == null ? null : Path.Combine(srcDir, srcfile);
                 var eletype = await Task.Run(() => File.Exists(origindestfile)) ? ElementType.File : ElementType.Directory;
 
-                if (srcfile == null)
+                if (srcfile == null && !deletedResult.Where(_ => _.Type == ElementType.Directory).Any(_ => destfile.StartsWith(_.Path)))
                 {
-                    result.Add(new ElementCompareResult(destfile, originsrcfile, origindestfile, CompareResult.Delete, eletype));
+                    deletedResult.Add(new ElementCompareResult(destfile, originsrcfile, origindestfile, CompareResult.Delete, eletype));
                 }
             }
 
+            result.AddRange(deletedResult);
+
             return result.ToArray();
+        }
+
+        private string FixFilePathCasing(string filePath)
+        {
+            var fullFilePath = Path.GetFullPath(filePath);
+
+            string fixedPath = "";
+            foreach (var token in fullFilePath.Split('\\'))
+            {
+                //first token should be drive token
+                if (fixedPath == "")
+                {
+                    fixedPath = string.Concat(token, "\\");
+                }
+                else
+                {
+                    string item = null;
+                    try { item = Directory.GetFileSystemEntries(fixedPath, token).FirstOrDefault(); }
+                    catch (DirectoryNotFoundException) { }
+                    fixedPath = item ?? Path.Combine(fixedPath, token);
+                }
+            }
+
+            return fixedPath;
         }
 
         private bool CompareContent(string srcfile, string destfile)
