@@ -193,7 +193,6 @@
         private void ReportStatus(string message)
         {
             lblProgress.Text = message;
-            Application.DoEvents();
         }
 
         private static Task CloneOrUpdateToSpecificBranchLatest(string url, string branch, string tempdir)
