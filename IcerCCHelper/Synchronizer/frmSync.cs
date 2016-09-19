@@ -141,6 +141,8 @@
                 return;
             }
 
+            this.LockUI();
+
             ss.DestFilter = ss.FilterDestSameAsSource ? ss.SourceFilter : ss.DestFilter;
             var reponame = GetRepoName(ss.SourceURL);
             var tempdir = Path.Combine(Path.GetTempPath(), $@"icercchelper\git\{reponame}");
@@ -151,6 +153,7 @@
             if (url == null)
             {
                 this.ReportStatus("update failed due to wrong source url");
+                this.UnlockUI();
                 return;
             }
 
@@ -178,6 +181,7 @@
 
             // empty status after finish
             this.ReportStatus(string.Empty);
+            this.UnlockUI();
         }
 
         private string GetAuthenticateURL(string url, string username, string password)
@@ -188,6 +192,18 @@
 
             var newurl = $"{m.Groups["first"]}{username}:{password}@{m.Groups["second"]}";
             return newurl;
+        }
+
+        private void LockUI()
+        {
+            btnCompare.Enabled = false;
+            btnSync.Enabled = false;
+        }
+
+        private void UnlockUI()
+        {
+            btnCompare.Enabled = true;
+            btnSync.Enabled = true;
         }
 
         private void ReportStatus(string message)
@@ -224,6 +240,7 @@ git clean -fdx");
 
         private void btnSync_Click(object sender, EventArgs e)
         {
+            this.LockUI();
             var comment = "";
             var list = lstChanges.Tag as ElementCompareResult[];
             if (list == null) return;
@@ -261,6 +278,9 @@ git clean -fdx");
             }
 
             frmRunCommand.RunClearCommand(commands.ToArray());
+            this.lstChanges.Items.Clear();
+
+            this.UnlockUI();
         }
 
         private void btnLoadSavedSessions_Click(object sender, EventArgs e)
