@@ -66,8 +66,8 @@
             this.txtSourceUrl.Text = session.SourceURL ?? "";
             this.txtSourceBasePath.Text = session.SourceBasePath ?? @"vob";
             this.txtSourceRule.Text = StandardizeLineEnd(session.SourceFilter ?? @"");
-            this.txtSourceUsername.Text = session.SourceUsername ?? @"";
-            this.txtSourcePassword.Text = session.SourcePassword ?? @"";
+            this.txtSourceUsername.Text = session.SourceUsername ?? this.txtSourceUsername.Text;
+            this.txtSourcePassword.Text = session.SourcePassword ?? this.txtSourcePassword.Text;
             this.txtDestPath.Text = session.DestPath ?? @"z:\";
             this.txtDestRule.Text = StandardizeLineEnd(session.DestFilter ?? @"");
             this.chkDestSameAsSource.Checked = session.FilterDestSameAsSourceSpecified ? session.FilterDestSameAsSource : true;
