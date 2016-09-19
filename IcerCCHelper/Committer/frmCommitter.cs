@@ -145,44 +145,51 @@
             lblLabelToCommit.ForeColor = SystemColors.ControlText;
         }
 
-        private void btnCommit_Click(object sender, EventArgs e)
+        private static bool ValidateCommit(string comment, string label, string[] files)
         {
-            var comment = this.txtCommitComment.Text.Replace("\r", "").Replace("\n", "").Replace("\"", "'");
-            var label = this.chkUseAlternativeLabel.Checked ? this.txtAlternativeLabel.Text : this.lblLabelToCommit.Text;
-
             if (string.IsNullOrEmpty(comment))
             {
                 MessageBox.Show("please make sure the commit comment is not empty");
-                return;
+                return false;
             }
 
             if (string.IsNullOrEmpty(label))
             {
                 MessageBox.Show("the label can not be empty");
-                return;
+                return false;
             }
 
             if (comment.IndexOf(":") == -1)
             {
                 MessageBox.Show("please enter your name to comment with colon(:)\r\ne.g: Icer: remove PI reset variable");
-                return;
+                return false;
             }
 
+            if (!files.Any())
+            {
+                MessageBox.Show("You do not check out any file.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private void btnCommit_Click(object sender, EventArgs e)
+        {
+            var comment = this.txtCommitComment.Text.Replace("\r", "").Replace("\n", "").Replace("\"", "'");
+            var label = this.chkUseAlternativeLabel.Checked ? this.txtAlternativeLabel.Text : this.lblLabelToCommit.Text;
             var files = lstChanges.Items
                 .OfType<ListViewItem>()
                 .Where(lvt => lvt.Checked)
                 .Select(lvt => lvt.Text)
                 .ToArray();
-            if (!files.Any())
-            {
-                MessageBox.Show("You do not check out any file.");
-                return;
-            }
+
+            if (!ValidateCommit(comment, label, files)) return;
 
             // reorder file to make sure the folder at last to check in to avoid directory scope problem in CC
             files = files
                 .OrderByDescending(s => s.Length)
-                .OrderBy(s => Directory.Exists("z:" + s) ? 1 : 0)
+                .OrderBy(s => Directory.Exists($"{this.locInfo.Volume}:{s}") ? 1 : 0)
                 .ToArray();
 
             var fileexample = string.Join(Environment.NewLine, files.Take(10));
@@ -195,26 +202,38 @@
                 return;
             }
 
+            LockUI();
             bool flag = true;
+
+            // reserve config spec before start if required to modify configspec
+            if (!this.chkDoNotModifyConfigSpecTxt.Checked)
+            {
+                var filename = Path.Combine(locInfo.BasePath, configSpecFilePath);
+                var checkedout = CheckOutFileUntilUserGiveUp(comment, filename);
+                if (!checkedout)
+                {
+                    MessageBox.Show("failed to update configspec.txt, terminate the process.");
+                    UnlockUI();
+                    return;
+                }
+            }
 
             // create label
             locInfo.CreateLabel(comment, label);
 
             // apply label
             var cmdApplyLabel = ClearCommands.ApplyLabelToFiles(label, files);
-            flag = frmRunCommand.RunClearCommand(cmdApplyLabel, true, true);
-            if (!flag) return;
-
             // check in files
             var cmdCheckIn = ClearCommands.CheckInFiles(comment, files);
-            flag = frmRunCommand.RunClearCommand(cmdCheckIn, true, false);
-            if (!flag) return;
+
+            flag = frmRunCommand.RunClearCommand(cmdApplyLabel.Concat(cmdCheckIn).ToArray(), true, true);
+            if (!flag) { UnlockUI(); return; }
 
             // write back config spec
             if (!this.chkDoNotModifyConfigSpecTxt.Checked)
             {
                 flag = ModifyConfigSpec(label, comment);
-                if (!flag) return;
+                if (!flag) { UnlockUI(); return; }
             }
 
             // update config spec
@@ -224,6 +243,16 @@
             this.RefreshCommit();
             this.txtCommitComment.Text = string.Empty;
             MessageBox.Show("Finished commit");
+        }
+
+        private void LockUI()
+        {
+            this.btnCommit.Enabled = false;
+        }
+
+        private void UnlockUI()
+        {
+            this.btnCommit.Enabled = true;
         }
 
         private bool ModifyConfigSpec(string label, string comment)
