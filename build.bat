@@ -35,6 +35,8 @@ echo IcerCCHelper.exe>>filelist
 echo IcerCCHelper.exe.config>>filelist
 echo log4net.dll>>filelist
 echo System.IO.Abstractions.dll>>filelist
+echo server.xml>>filelist
+echo GuidePage.html>>filelist
 
 if exist ..\..\..\IcerCCHelper.zip (del ..\..\..\IcerCCHelper.zip)
 7z a ..\..\..\IcerCCHelper.zip @filelist
