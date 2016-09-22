@@ -6,6 +6,7 @@
     using System.Drawing;
     using System.IO;
     using System.Linq;
+    using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Windows.Forms;
@@ -320,6 +321,19 @@
                 {
                     item.Selected = true;
                 }
+            }
+            else if (e.KeyCode == Keys.C && e.Control)
+            {
+                var sb = new StringBuilder();
+                foreach (ListViewItem item in lstChanges.Items)
+                {
+                    if (item.Selected)
+                    {
+                        sb.AppendLine(item.Text);
+                    }
+                }
+
+                Clipboard.SetText(sb.ToString());
             }
         }
 
